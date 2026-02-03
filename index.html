@@ -122,6 +122,19 @@ function vibratePhone() {
   if ("vibrate" in navigator) navigator.vibrate([50,30,50]);
 }
 
+// Safe random position for No button within screen
+function getSafeRandomPosition(element, padding = 20) {
+  const maxX = window.innerWidth - element.offsetWidth - padding;
+  const maxY = window.innerHeight - element.offsetHeight - padding;
+  const minX = padding;
+  const minY = padding;
+
+  const x = Math.random() * (maxX - minX) + minX;
+  const y = Math.random() * (maxY - minY) + minY;
+
+  return { x, y };
+}
+
 // Move No button randomly
 function moveNoButton() {
   vibratePhone();
@@ -133,16 +146,10 @@ function moveNoButton() {
   yesSize += 10;
   yesBtn.style.fontSize = yesSize + "px";
 
-  // Random position for No button within screen
-  const padding = 20;
-  const maxX = window.innerWidth - noBtn.offsetWidth - padding;
-  const maxY = window.innerHeight - noBtn.offsetHeight - padding;
-
-  const x = Math.random() * maxX;
-  const y = Math.random() * maxY;
-
-  noBtn.style.left = x + "px";
-  noBtn.style.top = y + "px";
+  // Get safe random position for No button
+  const pos = getSafeRandomPosition(noBtn, 20);
+  noBtn.style.left = pos.x + "px";
+  noBtn.style.top = pos.y + "px";
 }
 
 // No button triggers
@@ -189,4 +196,3 @@ function createConfetti() {
 
 </body>
 </html>
-
