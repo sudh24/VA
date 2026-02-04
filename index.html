@@ -88,6 +88,19 @@
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
   }
+
+  .sparkle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 16px;
+    z-index: 4;
+    opacity: 1;
+    animation: sparkleUp 1s linear forwards;
+  }
+
+  @keyframes sparkleUp {
+    to { transform: translateY(-50px) scale(1.5); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -106,39 +119,60 @@ const buttonsDiv = document.querySelector(".buttons");
 const question = document.getElementById("question");
 
 const guiltTexts = [
-  "Are you sure?", "Think about the pizza incident 🍕",
+  "Are you sure?", "You’ll regret this for 7 lifetimes 😩",
+  "Come on… it’s just one click 😏", "You can’t resist forever…",
+  "You know you secretly want to 😈", "You promised me a yes 😭",
+  "I thought we were inseparable… 😢","Think of the chocolate we could share 🍫",
+  "Just imagine the hugs you’d get 🤗","This is why I can’t trust easily 😭",
+  "I thought we had something special 😭", "I believed in us… do you? 💔",
   "Wow. After EVERYTHING?", "You promised 😤",
   "Remember our 3am talks??", "That’s cold.",
   "This hurts 😭", "Last chance 😩"
 ];
 
+let remainingGuiltTexts = [...guiltTexts]; // copy for no repeats
 let yesSize = 22;
-let isHoverDodge = false; // Flag for hover dodge
+let isHoverDodge = false;
+let dodgeRadiusX = 260;
+let dodgeRadiusY = 180;
 
 // Vibrate mobile if available
 function vibratePhone() {
   if ("vibrate" in navigator) navigator.vibrate([50,30,50]);
 }
 
+// Get next guilt text without repeats
+function getNextGuiltTextOnce() {
+  if (remainingGuiltTexts.length === 0) {
+    return "Fine… you win 😩";
+  }
+  const index = Math.floor(Math.random() * remainingGuiltTexts.length);
+  const text = remainingGuiltTexts[index];
+  remainingGuiltTexts.splice(index, 1);
+  return text;
+}
+
 // No button moves randomly when clicked
 noBtn.addEventListener("click", () => {
   vibratePhone();
 
-  noBtn.textContent = guiltTexts[Math.floor(Math.random() * guiltTexts.length)];
+  noBtn.textContent = getNextGuiltTextOnce();
 
-  // Grow Yes ONLY on real clicks
   if (!isHoverDodge) {
     yesSize += 10;
     yesBtn.style.fontSize = yesSize + "px";
   }
   isHoverDodge = false;
 
+  // Reduce dodge range after all guilt texts used
+  if (remainingGuiltTexts.length === 0) {
+    dodgeRadiusX *= 0.85; 
+    dodgeRadiusY *= 0.85;
+    noBtn.style.transform = `scale(${dodgeRadiusX / 260})`;
+  }
+
   const questionRect = question.getBoundingClientRect();
   const yesRect = yesBtn.getBoundingClientRect();
-  const buttonsRect = buttonsDiv.getBoundingClientRect();
-
-  const radiusX = 260;
-  const radiusY = 180;
 
   const centerX =
     (questionRect.left + questionRect.width / 2 +
@@ -150,8 +184,8 @@ noBtn.addEventListener("click", () => {
 
   const angle = Math.random() * 2 * Math.PI;
 
-  let x = centerX + Math.cos(angle) * radiusX - noBtn.offsetWidth / 2;
-  let y = centerY + Math.sin(angle) * radiusY - noBtn.offsetHeight / 2;
+  let x = centerX + Math.cos(angle) * dodgeRadiusX - noBtn.offsetWidth / 2;
+  let y = centerY + Math.sin(angle) * dodgeRadiusY - noBtn.offsetHeight / 2;
 
   x = Math.min(Math.max(x, 0), buttonsDiv.clientWidth - noBtn.offsetWidth);
   y = Math.min(Math.max(y, 0), buttonsDiv.clientHeight - noBtn.offsetHeight);
@@ -160,7 +194,7 @@ noBtn.addEventListener("click", () => {
   noBtn.style.top = y + "px";
 });
 
-// Hover = dodge (no Yes growth)
+// Hover = dodge
 noBtn.addEventListener("mouseenter", () => {
   isHoverDodge = true;
   noBtn.click();
@@ -175,22 +209,33 @@ yesBtn.addEventListener("click", () => {
   yesBtn.remove();
   noBtn.remove();
 
-  // Small text with translation reveal
   const smallText = document.createElement("p");
-  smallText.textContent = "Ich liebe dich ❤️"; // initial text
+  smallText.textContent = "Ich liebe dich ❤️";
   smallText.style.color = "white";
   smallText.style.fontSize = "1rem";
   smallText.style.marginTop = "8px";
   smallText.style.textAlign = "center";
   smallText.style.zIndex = "3";
   smallText.style.fontStyle = "italic";
-  smallText.style.cursor = "pointer"; // indicates it's clickable
-  smallText.title = "Click to see translation"; // tooltip
+  smallText.style.cursor = "pointer";
+  smallText.title = "Click to see translation";
+  smallText.style.transition = "transform 0.3s, color 0.3s";
   question.after(smallText);
 
-  // Reveal translation on click
   smallText.addEventListener("click", () => {
-    smallText.textContent = "I love you ❤️";
+    smallText.textContent = smallText.textContent === "Ich liebe dich ❤️"
+      ? "I love you ❤️"
+      : "Ich liebe dich ❤️";
+    createSparkle();
+  });
+
+  smallText.addEventListener("mouseenter", () => {
+    smallText.style.transform = "scale(1.1)";
+    smallText.style.color = "#ffd166";
+  });
+  smallText.addEventListener("mouseleave", () => {
+    smallText.style.transform = "scale(1)";
+    smallText.style.color = "white";
   });
 
   setInterval(createHeart, 250);
@@ -217,6 +262,18 @@ function createConfetti() {
     ["#ff4d6d","#ffd166","#06d6a0","#4d96ff"][Math.floor(Math.random()*4)];
   document.body.appendChild(confetti);
   setTimeout(() => confetti.remove(), 3000);
+}
+
+// Sparkle effect
+function createSparkle() {
+  const sparkle = document.createElement("div");
+  sparkle.className = "sparkle";
+  sparkle.textContent = "✨";
+  const rect = question.nextSibling.getBoundingClientRect();
+  sparkle.style.left = rect.left + rect.width / 2 + "px";
+  sparkle.style.top = rect.top + "px";
+  document.body.appendChild(sparkle);
+  setTimeout(() => sparkle.remove(), 1000);
 }
 </script>
 
