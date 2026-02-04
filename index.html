@@ -113,44 +113,46 @@ const guiltTexts = [
 ];
 
 let yesSize = 22;
+let isHoverDodge = false; // 👈 NEW FLAG
 
 // Vibrate mobile if available
 function vibratePhone() {
   if ("vibrate" in navigator) navigator.vibrate([50,30,50]);
 }
 
-// No button moves randomly around Yes and Question only when clicked
+// No button moves randomly when clicked
 noBtn.addEventListener("click", () => {
   vibratePhone();
 
-  // Random guilt text
   noBtn.textContent = guiltTexts[Math.floor(Math.random() * guiltTexts.length)];
 
-  // Grow Yes button
-  yesSize += 10;
-  yesBtn.style.fontSize = yesSize + "px";
+  // Grow Yes ONLY on real clicks
+  if (!isHoverDodge) {
+    yesSize += 10;
+    yesBtn.style.fontSize = yesSize + "px";
+  }
+  isHoverDodge = false;
 
-  // Get positions
   const questionRect = question.getBoundingClientRect();
   const yesRect = yesBtn.getBoundingClientRect();
   const buttonsRect = buttonsDiv.getBoundingClientRect();
 
-  // Increased radius to move No a bit further
-  const radiusX = 260; // horizontal distance
-  const radiusY = 180; // vertical distance
+  const radiusX = 260;
+  const radiusY = 180;
 
-  // Center point between Yes and Question
-  const centerX = (questionRect.left + questionRect.width/2 + yesRect.left + yesRect.width/2)/2 - buttonsRect.left;
-  const centerY = (questionRect.top + questionRect.height/2 + yesRect.top + yesRect.height/2)/2 - buttonsRect.top;
+  const centerX =
+    (questionRect.left + questionRect.width / 2 +
+     yesRect.left + yesRect.width / 2) / 2 - buttonsDiv.offsetLeft;
 
-  // Random angle
+  const centerY =
+    (questionRect.top + questionRect.height / 2 +
+     yesRect.top + yesRect.height / 2) / 2 - buttonsDiv.offsetTop;
+
   const angle = Math.random() * 2 * Math.PI;
 
-  // New position
   let x = centerX + Math.cos(angle) * radiusX - noBtn.offsetWidth / 2;
   let y = centerY + Math.sin(angle) * radiusY - noBtn.offsetHeight / 2;
 
-  // Clamp inside container
   x = Math.min(Math.max(x, 0), buttonsDiv.clientWidth - noBtn.offsetWidth);
   y = Math.min(Math.max(y, 0), buttonsDiv.clientHeight - noBtn.offsetHeight);
 
@@ -158,16 +160,21 @@ noBtn.addEventListener("click", () => {
   noBtn.style.top = y + "px";
 });
 
+// Hover = dodge (no Yes growth)
+noBtn.addEventListener("mouseenter", () => {
+  isHoverDodge = true;
+  noBtn.click();
+});
+
 // Yes button clicked
 yesBtn.addEventListener("click", () => {
-  // Post-Yes background
-  document.body.style.backgroundImage = "url('https://i.postimg.cc/VLc01bYW/IMG-8777.jpg')";
+  document.body.style.backgroundImage =
+    "url('https://i.postimg.cc/VLc01bYW/IMG-8777.jpg')";
 
   question.textContent = "YAY!!! 💕🥰 You’re my Valentine!";
   yesBtn.remove();
   noBtn.remove();
 
-  // Hearts + confetti
   setInterval(createHeart, 250);
   for (let i = 0; i < 140; i++) setTimeout(createConfetti, i * 12);
 });
